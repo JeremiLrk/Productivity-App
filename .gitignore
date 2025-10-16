@@ -1,24 +1,30 @@
-# Logs
-logs
-*.log
+# Node / JS
+node_modules/
+dist/
+dist-ssr/
+*.local
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Rust / Tauri
+/src-tauri/target/
+src-tauri/Cargo.lock
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# Build outputs
+*.exe
+*.dll
+*.dylib
+*.so
+*.log
+
+# IDE / OS
+.vscode/
+.idea/
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+Thumbs.db
+
+# Env files (if you add secrets later)
+.env
+.env.*
