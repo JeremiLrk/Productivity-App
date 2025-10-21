@@ -88,12 +88,9 @@ export function usePomodoro(initial? : Partial<Settings>) {
     }, [settings.focusMin, settings.breakMin, phase, running]);
 
     const progress =
-  totalThisPhase === 0
-    ? 0
-    : Math.min(
-        100,
-        Math.round(((totalThisPhase - secondsLeft) / totalThisPhase) * 100)
-      );
+      totalThisPhase === 0
+      ? 0
+      : ((totalThisPhase - secondsLeft) / totalThisPhase) * 100;
 
     // 3) return the API
     return {

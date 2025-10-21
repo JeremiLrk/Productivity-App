@@ -3,7 +3,7 @@ type ProgressRingProps = {
     size?: number;           // px
     strokeWidth?: number;    // px
     className?: string;
-    children?: React.ReactNode; // center content (your MM:SS)
+    children?: React.ReactNode; // center content (my MM:SS)
   };
   
   export function ProgressRing({
@@ -52,7 +52,7 @@ type ProgressRingProps = {
             strokeDasharray={circumference}
             strokeDashoffset={dashOffset}
             // smooth animate the arc
-            style={{ transition: "stroke-dashoffset 200ms linear" }}
+            style={{ transition: "stroke-dashoffset 1000ms linear" }}
           />
         </svg>
   
