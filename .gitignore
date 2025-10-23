@@ -1,30 +1,41 @@
-# Node / JS
+# Node
 node_modules/
-dist/
-dist-ssr/
-*.local
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
 
-# Rust / Tauri
-/src-tauri/target/
+# Vite & build output
+dist/
+dist-ssr/
+*.local
+
+# Tauri (Rust)
+src-tauri/target/
+src-tauri/.cargo/
 src-tauri/Cargo.lock
-
-# Build outputs
+*.pdb
 *.exe
-*.dll
-*.dylib
-*.so
-*.log
 
-# IDE / OS
+# Editor junk
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
 
-# Env files (if you add secrets later)
+# Environment files
 .env
-.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+*.log
+
+# Shadcn generated config
+components.json
+
+# OS / other
+*.swp
+*.bak
+*.tmp
