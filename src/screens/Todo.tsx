@@ -1,30 +1,30 @@
+import { useState } from "react";
+import { useTasks } from "@/hooks/useTasks";
 
-// import Database from "@tauri-apps/plugin-sql";
+export default function TasksScreen() {
+  const { tasks, loading, create, setDone, setPriority, setStatus, updateTitle, remove } = useTasks();
+  const [title, setTitle] = useState("");
 
-// const db = await Database.load("sqlite:tasks.db");
+  return (
+    <div>
+      <form onSubmit={(e) => { e.preventDefault(); void create(title); setTitle(""); }}>
+        <input value={title} onChange={(e) => setTitle(e.target.value)} />
+        <button>Add</button>
+      </form>
 
-
-// //create tables for tasks
-// await db.execute(
-//   `CREATE TABLE IF NOT EXISTS tasks (
-// 	  id INTEGER PRIMARY KEY AUTOINCREMENT,
-//   	title TEXT NOT NULL,
-//   	done BOOLEAN default 0
-//   )`
-// )
-
-/*
-//add tasks
-await db.execute("INSERT INTO tasks (title, done) VALUES (?, ?)", ["Learn Tauri", 0])
-//Get all tasks
-const tasks = await db.select("SELECT * FROM TASKS")
-//Mark task as done
-await db.execute("UPDATE tasks SET done = 1 WHERE ID = ?",[taskId])
-//delete a task
-await db.execute("DELETE FROM tasks WHERE id = ?", [taskId]);
-*/
-
-
-export default function Todo() {
-    return <h1>Your todo list</h1>
+      {loading ? "Loading..." : tasks.map(t => (
+        <div key={t.id}>
+          <input type="checkbox" checked={t.done} onChange={(e) => setDone(t.id, e.target.checked)} />
+          <input value={t.title} onChange={(e) => updateTitle(t.id, e.target.value)} />
+          <select value={t.priority} onChange={(e) => setPriority(t.id, e.target.value as any)}>
+            <option>low</option><option>medium</option><option>high</option>
+          </select>
+          <select value={t.status} onChange={(e) => setStatus(t.id, e.target.value as any)}>
+            <option>todo</option><option>in_progress</option><option>finished</option>
+          </select>
+          <button onClick={() => remove(t.id)}>Delete</button>
+        </div>
+      ))}
+    </div>
+  );
 }

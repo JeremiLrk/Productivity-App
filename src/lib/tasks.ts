@@ -30,7 +30,7 @@ export async function listTasks() : Promise<Task[]> {
         FROM tasks
         ORDER BY 
         CASE priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 ELSE 2 END,
-        CASE status   WHEN 'todo' THEN 0 WHEN 'in_progress' THEN 1 ELSE 2 END,
+        CASE status   WHEN 'in_progress' THEN 0 WHEN 'todo' THEN 1 ELSE 2 END,
         id DESC       
         `
     )
@@ -47,7 +47,7 @@ export async function addTask(title:string, priority : Priority = "medium") : Pr
 
 
 //Update only the title
-export async function updateTitel(id :number, title : string) : Promise<void> {
+export async function updateTitle(id :number, title : string) : Promise<void> {
     const db = await getDb();
     await db.execute(`UPDATE tasks SET title = ? WHERE id = ?`, [title, id]);    
 }
