@@ -54,11 +54,6 @@ export function SettingsDialog({
           setCyclesBeforeLongBreak={setCyclesBeforeLongBreak}
           disabled={disabled}
         />
-
-        {/* Optional footer actions
-        <div className="mt-4 flex justify-end">
-          <Button variant="outline">Close</Button>
-        </div> */}
       </DialogContent>
     </Dialog>
   );
