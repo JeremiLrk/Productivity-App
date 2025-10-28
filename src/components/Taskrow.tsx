@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import {useState} from "react";
 import { Task, Priority, Status } from "@/lib/tasks";
 
 export function TaskRow(props: {
