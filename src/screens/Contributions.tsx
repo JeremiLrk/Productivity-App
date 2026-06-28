@@ -13,6 +13,12 @@ type GraphDay = {
   inRange: boolean;
 };
 
+type MonthMarker = {
+  key: string;
+  label: string;
+  weekIndex: number;
+};
+
 function toLocalDateString(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -40,10 +46,10 @@ function formatLongDate(date: Date) {
 }
 
 function getCellClass(day: GraphDay) {
-  if (!day.inRange) return "bg-transparent border-transparent";
-  if (!day.record || day.record.minutesCompleted === 0) return "bg-zinc-100 border-zinc-200";
-  if (day.record.minutesCompleted >= day.record.goalMinutes) return "bg-emerald-500 border-emerald-600";
-  return "bg-emerald-200 border-emerald-300";
+  if (!day.inRange) return "border-transparent bg-transparent";
+  if (!day.record || day.record.minutesCompleted === 0) return "border-zinc-200 bg-zinc-100";
+  if (day.record.minutesCompleted >= day.record.goalMinutes) return "border-emerald-600 bg-emerald-500";
+  return "border-emerald-300 bg-emerald-200";
 }
 
 function getStatus(record?: DailyFocus) {
@@ -97,6 +103,21 @@ export default function Contributions() {
     return result;
   }, [firstRangeDay, graphStart, recordByDate, today]);
 
+  const monthMarkers = useMemo<MonthMarker[]>(() => {
+    const seen = new Set<string>();
+
+    return weeks.flatMap((week, weekIndex) => {
+      const monthStart = week.find((day) => day.inRange && day.date.getDate() <= 7);
+      if (!monthStart) return [];
+
+      const key = `${monthStart.date.getFullYear()}-${monthStart.date.getMonth()}`;
+      if (seen.has(key)) return [];
+      seen.add(key);
+
+      return [{ key, label: MONTH_LABELS[monthStart.date.getMonth()], weekIndex }];
+    });
+  }, [weeks]);
+
   const selectedDay = useMemo(() => {
     if (!selectedKey) return undefined;
     return weeks.flat().find((day) => day.key === selectedKey);
@@ -104,39 +125,31 @@ export default function Contributions() {
 
   const totalMinutes = records.reduce((sum, record) => sum + record.minutesCompleted, 0);
   const goalsHit = records.filter((record) => record.minutesCompleted >= record.goalMinutes).length;
-  const monthMarkers = weeks.map((week, index) => {
-    const firstOfMonth = week.find((day) => day.date.getDate() <= 7 && day.inRange);
-    return {
-      key: week[0].key,
-      label: firstOfMonth && (index === 0 || firstOfMonth.date.getDate() <= 7)
-        ? MONTH_LABELS[firstOfMonth.date.getMonth()]
-        : "",
-    };
-  });
+  const graphColumns = `repeat(${weeks.length}, minmax(6px, 1fr))`;
 
   return (
     <div className="flex h-full w-full items-center justify-center overflow-hidden p-4">
-      <div className="flex h-full w-full max-w-6xl flex-col gap-4 overflow-hidden">
-        <div className="shrink-0 space-y-1">
+      <div className="flex h-full w-full max-w-5xl flex-col gap-3 overflow-hidden">
+        <div className="min-h-11 shrink-0 space-y-1 pl-12 xl:pl-0">
           <h1 className="text-2xl font-semibold tracking-tight">Contribution Graph</h1>
           <p className="text-sm text-muted-foreground">A 12-month view of the days you reached your focus-minute goal.</p>
         </div>
 
         <div className="grid shrink-0 grid-cols-3 gap-3">
           <Card className="rounded-lg shadow-sm">
-            <CardHeader className="p-4">
+            <CardHeader className="p-3">
               <CardDescription>Total focus</CardDescription>
               <CardTitle className="text-xl">{totalMinutes} min</CardTitle>
             </CardHeader>
           </Card>
           <Card className="rounded-lg shadow-sm">
-            <CardHeader className="p-4">
+            <CardHeader className="p-3">
               <CardDescription>Goals hit</CardDescription>
               <CardTitle className="text-xl">{goalsHit} days</CardTitle>
             </CardHeader>
           </Card>
           <Card className="rounded-lg shadow-sm">
-            <CardHeader className="p-4">
+            <CardHeader className="p-3">
               <CardDescription>Range</CardDescription>
               <CardTitle className="text-xl">12 months</CardTitle>
             </CardHeader>
@@ -153,52 +166,51 @@ export default function Contributions() {
               <div className="text-sm text-muted-foreground">Loading graph...</div>
             ) : (
               <>
-                <div
-                  className="grid min-h-0 flex-1 gap-x-[0.35rem] gap-y-1"
-                  style={{ gridTemplateColumns: "1.8rem minmax(0, 1fr)" }}
-                >
-                  <div />
-                  <div
-                    className="grid gap-[0.18rem] text-[0.56rem] leading-none text-muted-foreground"
-                    style={{ gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 1fr))` }}
-                  >
-                    {monthMarkers.map((marker) => (
-                      <div key={marker.key} className="truncate">
-                        {marker.label}
+                <div className="min-h-0 flex-1">
+                  <div className="grid gap-x-2" style={{ gridTemplateColumns: "2rem minmax(0, 1fr)" }}>
+                    <div />
+                    <div className="relative mb-2 h-4">
+                      <div className="grid h-full" style={{ gridTemplateColumns: graphColumns }}>
+                        {monthMarkers.map((marker) => (
+                          <div
+                            key={marker.key}
+                            className="whitespace-nowrap text-[10px] leading-4 text-muted-foreground"
+                            style={{ gridColumn: `${marker.weekIndex + 1} / span 4` }}
+                          >
+                            {marker.label}
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </div>
 
-                  <div className="grid grid-rows-7 gap-[0.18rem] text-[0.55rem] leading-none text-muted-foreground">
-                    {WEEKDAY_LABELS.map((label, index) => (
-                      <div key={label} className="flex items-center">
-                        {index % 2 === 1 ? label.slice(0, 1) : ""}
-                      </div>
-                    ))}
-                  </div>
+                    <div className="grid grid-rows-7 gap-[3px] text-[10px] leading-none text-muted-foreground">
+                      {WEEKDAY_LABELS.map((label, index) => (
+                        <div key={label} className="flex h-3 items-center">
+                          {index % 2 === 1 ? label : ""}
+                        </div>
+                      ))}
+                    </div>
 
-                  <div
-                    className="grid gap-[0.18rem]"
-                    style={{ gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 1fr))` }}
-                  >
-                    {weeks.map((week) => (
-                      <div key={week[0].key} className="grid grid-rows-7 gap-[0.18rem]">
-                        {week.map((day) => {
-                          const label = `${formatLongDate(day.date)}: ${day.record?.minutesCompleted ?? 0}/${day.record?.goalMinutes ?? "-"} min - ${getStatus(day.record)}`;
-                          return (
-                            <button
-                              key={day.key}
-                              type="button"
-                              title={day.inRange ? label : ""}
-                              aria-label={day.inRange ? label : undefined}
-                              disabled={!day.inRange}
-                              onClick={() => setSelectedKey(day.key)}
-                              className={`aspect-square w-full rounded-[2px] border transition-transform ${getCellClass(day)} ${selectedKey === day.key ? "ring-1 ring-black ring-offset-1" : ""} ${day.inRange ? "hover:scale-110" : "cursor-default"}`}
-                            />
-                          );
-                        })}
-                      </div>
-                    ))}
+                    <div className="grid gap-[3px]" style={{ gridTemplateColumns: graphColumns }}>
+                      {weeks.map((week) => (
+                        <div key={week[0].key} className="grid grid-rows-7 gap-[3px]">
+                          {week.map((day) => {
+                            const label = `${formatLongDate(day.date)}: ${day.record?.minutesCompleted ?? 0}/${day.record?.goalMinutes ?? "-"} min - ${getStatus(day.record)}`;
+                            return (
+                              <button
+                                key={day.key}
+                                type="button"
+                                title={day.inRange ? label : ""}
+                                aria-label={day.inRange ? label : undefined}
+                                disabled={!day.inRange}
+                                onClick={() => setSelectedKey(day.key)}
+                                className={`aspect-square w-full rounded-[3px] border transition-transform ${getCellClass(day)} ${selectedKey === day.key ? "ring-2 ring-black ring-offset-1" : ""} ${day.inRange ? "hover:scale-110" : "cursor-default"}`}
+                              />
+                            );
+                          })}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
@@ -216,11 +228,11 @@ export default function Contributions() {
 
         {selectedDay && selectedDay.inRange && (
           <Card className="shrink-0 rounded-lg shadow-sm">
-            <CardHeader className="p-4 pb-2">
+            <CardHeader className="p-3 pb-1">
               <CardTitle className="text-base">{formatLongDate(selectedDay.date)}</CardTitle>
               <CardDescription>{getStatus(selectedDay.record)}</CardDescription>
             </CardHeader>
-            <CardContent className="p-4 pt-0 text-sm">
+            <CardContent className="p-3 pt-0 text-sm">
               {(selectedDay.record?.minutesCompleted ?? 0)} of {(selectedDay.record?.goalMinutes ?? 0)} focus minutes completed.
             </CardContent>
           </Card>
