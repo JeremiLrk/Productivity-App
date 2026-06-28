@@ -9,6 +9,10 @@ export type Settings = {
   cyclesBeforeLongBreak: number; // how many focus sessions before a long break
 };
 
+type UsePomodoroOptions = {
+  onFocusMinute?: (minutes: number) => void | Promise<void>;
+};
+
 const DEFAULTS: Settings = {
   focusMin: 25,
   shortBreakMin: 5,
@@ -16,7 +20,9 @@ const DEFAULTS: Settings = {
   cyclesBeforeLongBreak: 4,
 };
 
-export function usePomodoro(initial?: Partial<Settings>) {
+export type PomodoroController = ReturnType<typeof usePomodoro>;
+
+export function usePomodoro(initial?: Partial<Settings>, options?: UsePomodoroOptions) {
   // Settings
   const [settings, setSettings] = useState<Settings>({ ...DEFAULTS, ...initial });
 
@@ -28,6 +34,20 @@ export function usePomodoro(initial?: Partial<Settings>) {
 
   // Interval ref
   const intervalRef = useRef<number | null>(null);
+  const focusedSecondsRef = useRef(0);
+  const onFocusMinuteRef = useRef<UsePomodoroOptions["onFocusMinute"]>(options?.onFocusMinute);
+
+  useEffect(() => {
+    onFocusMinuteRef.current = options?.onFocusMinute;
+  }, [options?.onFocusMinute]);
+
+  const recordFocusMinute = useCallback((minutes: number) => {
+    void onFocusMinuteRef.current?.(minutes);
+  }, []);
+
+  const clearFocusedSeconds = useCallback(() => {
+    focusedSecondsRef.current = 0;
+  }, []);
 
   // Helpers
   const secondsForPhase = useCallback(
@@ -42,7 +62,7 @@ export function usePomodoro(initial?: Partial<Settings>) {
   const totalThisPhase = useMemo(() => secondsForPhase(phase), [phase, secondsForPhase]);
 
   const computeNextPhaseFromFocus = useCallback((): Phase => {
-    const comingUp = cyclesCompleted + 1; // we’re finishing a focus
+    const comingUp = cyclesCompleted + 1; // finishing a focus
     return comingUp % Math.max(1, settings.cyclesBeforeLongBreak) === 0 ? "long" : "short";
   }, [cyclesCompleted, settings.cyclesBeforeLongBreak]);
 
@@ -58,8 +78,16 @@ export function usePomodoro(initial?: Partial<Settings>) {
 
     intervalRef.current = window.setInterval(() => {
       setSecondsLeft((s) => {
+        if (phase === "focus") {
+          focusedSecondsRef.current += 1;
+          if (focusedSecondsRef.current >= 60) {
+            const minutesToAdd = Math.floor(focusedSecondsRef.current / 60);
+            focusedSecondsRef.current %= 60;
+            recordFocusMinute(minutesToAdd);
+          }
+        }
+
         if (s <= 1) {
-          // Decide next phase
           let nextPhase: Phase;
           if (phase === "focus") {
             nextPhase = computeNextPhaseFromFocus();
@@ -67,9 +95,9 @@ export function usePomodoro(initial?: Partial<Settings>) {
             nextPhase = "focus";
           }
 
-          // Update counters when finishing a focus
           if (phase === "focus") {
             setCyclesCompleted((c) => c + 1);
+            clearFocusedSeconds();
           }
 
           setPhase(nextPhase);
@@ -85,7 +113,7 @@ export function usePomodoro(initial?: Partial<Settings>) {
         intervalRef.current = null;
       }
     };
-  }, [running, phase, computeNextPhaseFromFocus, secondsForPhase]);
+  }, [running, phase, computeNextPhaseFromFocus, secondsForPhase, recordFocusMinute, clearFocusedSeconds]);
 
   // Controls
   const start = useCallback(() => {
@@ -101,24 +129,25 @@ export function usePomodoro(initial?: Partial<Settings>) {
     setRunning(false);
     setPhase("focus");
     setCyclesCompleted(0);
+    clearFocusedSeconds();
     setSecondsLeft(secondsForPhase("focus"));
-  }, [secondsForPhase]);
+  }, [secondsForPhase, clearFocusedSeconds]);
 
   const skip = useCallback(() => {
-    // emulate “time’s up” transition
     let next: Phase;
     if (phase === "focus") {
       next = computeNextPhaseFromFocus();
       setCyclesCompleted((c) => c + 1);
+      clearFocusedSeconds();
     } else {
       next = "focus";
     }
     setPhase(next);
     setSecondsLeft(secondsForPhase(next));
     setRunning(true);
-  }, [phase, computeNextPhaseFromFocus, secondsForPhase]);
+  }, [phase, computeNextPhaseFromFocus, secondsForPhase, clearFocusedSeconds]);
 
-  // Settings: convenient per-field setters (so your SettingsPanel can plug right in)
+  // Settings: convenient per-field setters
   const setFocusMin = useCallback(
     (n: number) => setSettings((s) => ({ ...s, focusMin: Math.max(0, n) })),
     []
@@ -136,12 +165,23 @@ export function usePomodoro(initial?: Partial<Settings>) {
     []
   );
 
-  // Keep seconds in sync when NOT running (changing settings shouldn’t yank a live timer)
+  const previousSettingsRef = useRef(settings);
+
+  // Keep seconds in sync when settings change while idle. Pausing should preserve remaining time.
   useEffect(() => {
-    if (!running) {
+    const previousSettings = previousSettingsRef.current;
+    const settingsChanged =
+      previousSettings.focusMin !== settings.focusMin ||
+      previousSettings.shortBreakMin !== settings.shortBreakMin ||
+      previousSettings.longBreakMin !== settings.longBreakMin;
+
+    previousSettingsRef.current = settings;
+
+    if (!running && settingsChanged) {
+      clearFocusedSeconds();
       setSecondsLeft(secondsForPhase(phase));
     }
-  }, [running, phase, secondsForPhase]);
+  }, [phase, running, secondsForPhase, settings, clearFocusedSeconds]);
 
   // Progress
   const progress = totalThisPhase === 0 ? 0 : ((totalThisPhase - secondsLeft) / totalThisPhase) * 100;
