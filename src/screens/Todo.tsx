@@ -18,7 +18,6 @@ export default function TasksScreen(){
 
   //Local state for "Add task" input
   const [title, setTitle] = useState<string>("");
-
   const [query, setQuery] = useState<string>("");
   const [priorityFilter, setPriorityFilter] = useState<"all" | Priority>("all")
   const [statusFilter, setStatusFilter] = useState<"all" | Status>("all");
@@ -49,10 +48,16 @@ export default function TasksScreen(){
     setTitle(""); //Cleat the input after adding the task
   }
 
+  //render the day of today
+  const currentDate = new Date();
+  const options: Intl.DateTimeFormatOptions = { weekday: "long", month: "long", day: "numeric" };
   
   return (
     <div style={{ maxWidth: 740, margin: "0 auto", padding: 16 }}>
       {/* Header */}
+      <div style={{ marginBottom: 16, color: "#6b7280" }}>
+        {currentDate.toLocaleDateString('en-US', options)}
+      </div>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
         <h1 style={{ fontSize: 24, fontWeight: 600 }}>Tasks</h1>
         <button
