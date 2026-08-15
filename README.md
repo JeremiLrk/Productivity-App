@@ -65,4 +65,4 @@ The app currently uses this locally for authentication and playback controls. Yo
 - Focus progress counts real focus minutes while the Pomodoro focus phase is running.
 - Break time does not count toward daily focus progress.
 - Data is stored locally with SQLite.
-- Spotify login is currently kept in memory, so reconnecting may be needed after restarting the app.
+- Spotify login is stored locally in the app data folder, so reconnecting is usually not needed after restarting the app.

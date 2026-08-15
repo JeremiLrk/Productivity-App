@@ -47,7 +47,7 @@ function formatLongDate(date: Date) {
 
 function getCellClass(day: GraphDay) {
   if (!day.inRange) return "border-transparent bg-transparent";
-  if (!day.record || day.record.minutesCompleted === 0) return "border-zinc-200 bg-zinc-100";
+  if (!day.record || day.record.minutesCompleted === 0) return "border-border bg-secondary";
   if (day.record.minutesCompleted >= day.record.goalMinutes) return "border-emerald-600 bg-emerald-500";
   return "border-emerald-300 bg-emerald-200";
 }
@@ -56,6 +56,37 @@ function getStatus(record?: DailyFocus) {
   if (!record || record.minutesCompleted === 0) return "No focus recorded";
   if (record.minutesCompleted >= record.goalMinutes) return "Goal hit";
   return "Partial progress";
+}
+
+function hitGoal(record?: DailyFocus) {
+  return !!record && record.minutesCompleted >= record.goalMinutes;
+}
+
+function calculateCurrentStreak(recordByDate: Map<string, DailyFocus>, today: Date) {
+  let streak = 0;
+  for (let offset = 0; offset < 365; offset += 1) {
+    const date = addDays(today, -offset);
+    if (!hitGoal(recordByDate.get(toLocalDateString(date)))) break;
+    streak += 1;
+  }
+  return streak;
+}
+
+function calculateLongestStreak(days: GraphDay[]) {
+  let longest = 0;
+  let current = 0;
+
+  days.forEach((day) => {
+    if (day.inRange && hitGoal(day.record)) {
+      current += 1;
+      longest = Math.max(longest, current);
+      return;
+    }
+
+    current = 0;
+  });
+
+  return longest;
 }
 
 export default function Contributions() {
@@ -123,8 +154,17 @@ export default function Contributions() {
     return weeks.flat().find((day) => day.key === selectedKey);
   }, [selectedKey, weeks]);
 
+  const graphDays = useMemo(() => weeks.flat(), [weeks]);
   const totalMinutes = records.reduce((sum, record) => sum + record.minutesCompleted, 0);
+  const totalHours = Math.round((totalMinutes / 60) * 10) / 10;
   const goalsHit = records.filter((record) => record.minutesCompleted >= record.goalMinutes).length;
+  const currentStreak = calculateCurrentStreak(recordByDate, today);
+  const longestStreak = calculateLongestStreak(graphDays);
+  const bestDay = records.reduce<DailyFocus | undefined>((best, record) => {
+    if (!best || record.minutesCompleted > best.minutesCompleted) return record;
+    return best;
+  }, undefined);
+  const weeklyAverage = Math.round(totalMinutes / 52);
   const graphColumns = `repeat(${weeks.length}, minmax(6px, 1fr))`;
 
   return (
@@ -135,23 +175,35 @@ export default function Contributions() {
           <p className="text-sm text-muted-foreground">A 12-month view of the days you reached your focus-minute goal.</p>
         </div>
 
-        <div className="grid shrink-0 grid-cols-3 gap-3">
+        <div className="grid shrink-0 grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           <Card className="rounded-lg shadow-sm">
             <CardHeader className="p-3">
               <CardDescription>Total focus</CardDescription>
-              <CardTitle className="text-xl">{totalMinutes} min</CardTitle>
+              <CardTitle className="text-xl">{totalHours}h</CardTitle>
             </CardHeader>
           </Card>
           <Card className="rounded-lg shadow-sm">
             <CardHeader className="p-3">
-              <CardDescription>Goals hit</CardDescription>
-              <CardTitle className="text-xl">{goalsHit} days</CardTitle>
+              <CardDescription>Current streak</CardDescription>
+              <CardTitle className="text-xl">{currentStreak}d</CardTitle>
             </CardHeader>
           </Card>
           <Card className="rounded-lg shadow-sm">
             <CardHeader className="p-3">
-              <CardDescription>Range</CardDescription>
-              <CardTitle className="text-xl">12 months</CardTitle>
+              <CardDescription>Longest streak</CardDescription>
+              <CardTitle className="text-xl">{longestStreak}d</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card className="rounded-lg shadow-sm">
+            <CardHeader className="p-3">
+              <CardDescription>Best day</CardDescription>
+              <CardTitle className="text-xl">{bestDay ? `${bestDay.minutesCompleted}m` : "0m"}</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card className="rounded-lg shadow-sm">
+            <CardHeader className="p-3">
+              <CardDescription>Weekly avg</CardDescription>
+              <CardTitle className="text-xl">{weeklyAverage}m</CardTitle>
             </CardHeader>
           </Card>
         </div>
@@ -159,7 +211,7 @@ export default function Contributions() {
         <Card className="flex min-h-0 flex-1 flex-col rounded-lg shadow-sm">
           <CardHeader className="shrink-0 p-4 pb-2">
             <CardTitle className="text-lg">Daily Goal History</CardTitle>
-            <CardDescription>Each day is judged against the goal saved for that date.</CardDescription>
+            <CardDescription>{goalsHit} goal days. Each day is judged against the goal saved for that date.</CardDescription>
           </CardHeader>
           <CardContent className="flex min-h-0 flex-1 flex-col p-4 pt-2">
             {loading ? (
@@ -204,7 +256,7 @@ export default function Contributions() {
                                 aria-label={day.inRange ? label : undefined}
                                 disabled={!day.inRange}
                                 onClick={() => setSelectedKey(day.key)}
-                                className={`aspect-square w-full rounded-[3px] border transition-transform ${getCellClass(day)} ${selectedKey === day.key ? "ring-2 ring-black ring-offset-1" : ""} ${day.inRange ? "hover:scale-110" : "cursor-default"}`}
+                                className={`aspect-square w-full rounded-[3px] border transition-transform ${getCellClass(day)} ${selectedKey === day.key ? "ring-2 ring-ring ring-offset-1 ring-offset-background" : ""} ${day.inRange ? "hover:scale-110" : "cursor-default"}`}
                               />
                             );
                           })}
@@ -216,7 +268,7 @@ export default function Contributions() {
 
                 <div className="mt-3 flex shrink-0 items-center justify-end gap-2 text-xs text-muted-foreground">
                   <span>Less</span>
-                  <span className="h-3 w-3 rounded-[3px] border border-zinc-200 bg-zinc-100" />
+                  <span className="h-3 w-3 rounded-[3px] border border-border bg-secondary" />
                   <span className="h-3 w-3 rounded-[3px] border border-emerald-300 bg-emerald-200" />
                   <span className="h-3 w-3 rounded-[3px] border border-emerald-600 bg-emerald-500" />
                   <span>Goal hit</span>

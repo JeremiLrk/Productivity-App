@@ -1,5 +1,4 @@
 import { ProgressRing } from "@/components/ProgressRing";
-import { SettingsDialog } from "@/components/SettingsDialog";
 import { ProgressDots } from "@/components/ProgressDots";
 import { Button } from "@/components/ui/button";
 import type { PomodoroController } from "@/hooks/usePomodoro";
@@ -20,10 +19,6 @@ export default function Pomodoro({ timer }: PomodoroProps) {
     reset,
     progress,
     settings,
-    setFocusMin,
-    setShortBreakMin,
-    setLongBreakMin,
-    setCyclesBeforeLongBreak,
     cyclesCompleted,
   } = timer;
 
@@ -38,7 +33,7 @@ export default function Pomodoro({ timer }: PomodoroProps) {
   const activeIndex = phase === "focus" ? completedInCycle : undefined;
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center gap-5 p-6 text-black">
+    <div className="relative flex min-h-screen flex-col items-center justify-center gap-5 p-6 text-foreground">
       <div className="text-xl font-semibold tracking-wide">{phaseLabel}</div>
 
       <ProgressRing value={progress} size={220} strokeWidth={10}>
@@ -47,7 +42,7 @@ export default function Pomodoro({ timer }: PomodoroProps) {
 
       <div className="flex flex-col items-center gap-2">
         <ProgressDots count={N} filled={filled} activeIndex={activeIndex} size={12} />
-        <div className="text-xs text-black/70">
+        <div className="text-xs text-muted-foreground">
           {filled}/{N} focus sessions to long break
         </div>
       </div>
@@ -95,15 +90,6 @@ export default function Pomodoro({ timer }: PomodoroProps) {
           Reset
         </Button>
       </div>
-
-      <SettingsDialog
-        settings={settings}
-        setFocusMin={setFocusMin}
-        setShortBreakMin={setShortBreakMin}
-        setLongBreakMin={setLongBreakMin}
-        setCyclesBeforeLongBreak={setCyclesBeforeLongBreak}
-        disabled={running}
-      />
     </div>
   );
 }

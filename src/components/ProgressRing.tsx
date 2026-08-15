@@ -35,7 +35,7 @@ type ProgressRingProps = {
             cy={size / 2}
             r={radius}
             stroke="currentColor"
-            className="text-gray-200"
+            className="text-muted"
             strokeWidth={strokeWidth}
             fill="none"
           />
@@ -45,7 +45,7 @@ type ProgressRingProps = {
             cy={size / 2}
             r={radius}
             stroke="currentColor"
-            className="text-black"
+            className="text-foreground"
             strokeWidth={strokeWidth}
             strokeLinecap="round"
             fill="none"

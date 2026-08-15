@@ -1,30 +1,24 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import {
+  DEFAULT_POMODORO_SETTINGS,
+  getPomodoroSettings,
+  setPomodoroSettings,
+  type PomodoroSettings,
+} from "@/lib/appSettings";
 
 export type Phase = "focus" | "short" | "long";
 
-export type Settings = {
-  focusMin: number;
-  shortBreakMin: number;
-  longBreakMin: number;
-  cyclesBeforeLongBreak: number; // how many focus sessions before a long break
-};
+export type Settings = PomodoroSettings;
 
 type UsePomodoroOptions = {
   onFocusMinute?: (minutes: number) => void | Promise<void>;
-};
-
-const DEFAULTS: Settings = {
-  focusMin: 25,
-  shortBreakMin: 5,
-  longBreakMin: 15,
-  cyclesBeforeLongBreak: 4,
 };
 
 export type PomodoroController = ReturnType<typeof usePomodoro>;
 
 export function usePomodoro(initial?: Partial<Settings>, options?: UsePomodoroOptions) {
   // Settings
-  const [settings, setSettings] = useState<Settings>({ ...DEFAULTS, ...initial });
+  const [settings, setSettings] = useState<Settings>({ ...DEFAULT_POMODORO_SETTINGS, ...initial });
 
   // State
   const [phase, setPhase] = useState<Phase>("focus");
@@ -36,6 +30,26 @@ export function usePomodoro(initial?: Partial<Settings>, options?: UsePomodoroOp
   const intervalRef = useRef<number | null>(null);
   const focusedSecondsRef = useRef(0);
   const onFocusMinuteRef = useRef<UsePomodoroOptions["onFocusMinute"]>(options?.onFocusMinute);
+  const settingsLoadedRef = useRef(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void getPomodoroSettings().then((storedSettings) => {
+      if (cancelled) return;
+      settingsLoadedRef.current = true;
+      setSettings({ ...storedSettings, ...initial });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [initial]);
+
+  useEffect(() => {
+    if (!settingsLoadedRef.current) return;
+    void setPomodoroSettings(settings);
+  }, [settings]);
 
   useEffect(() => {
     onFocusMinuteRef.current = options?.onFocusMinute;

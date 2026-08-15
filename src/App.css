@@ -72,4 +72,10 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  .tham-inner,
+  .tham-inner::before,
+  .tham-inner::after {
+    background-color: currentColor;
+  }
 }

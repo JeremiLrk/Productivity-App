@@ -21,9 +21,9 @@ type Props = {
               key={i}
               className={[
                 "rounded-full border transition-transform",
-                isFilled ? "bg-black border-black" : "bg-white border-black/40",
+                isFilled ? "border-foreground bg-foreground" : "border-border bg-background",
                 // subtle highlight ring on active
-                isActive ? "animate-pulse ring-2 ring-black/40" : "",
+                isActive ? "animate-pulse ring-2 ring-ring/40" : "",
                 "shadow-[0_1px_0_rgba(0,0,0,0.05)]",
                 "hover:scale-105"
               ].join(" ")}
