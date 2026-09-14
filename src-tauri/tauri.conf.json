@@ -12,9 +12,23 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "LOCK IN",
         "width": 800,
         "height": 600
+      },
+      {
+        "label": "timer-popout",
+        "title": "LOCK IN Timer",
+        "url": "timer-popout.html",
+        "width": 260,
+        "height": 150,
+        "minWidth": 220,
+        "minHeight": 130,
+        "resizable": true,
+        "alwaysOnTop": true,
+        "decorations": false,
+        "visible": false
       }
     ],
     "security": {

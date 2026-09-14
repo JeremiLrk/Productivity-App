@@ -165,11 +165,11 @@ export default function Contributions() {
     return best;
   }, undefined);
   const weeklyAverage = Math.round(totalMinutes / 52);
-  const graphColumns = `repeat(${weeks.length}, minmax(6px, 1fr))`;
+  const graphColumns = `repeat(${weeks.length}, minmax(5px, 1fr))`;
 
   return (
-    <div className="flex h-full w-full items-center justify-center overflow-hidden p-4">
-      <div className="flex h-full w-full max-w-5xl flex-col gap-3 overflow-hidden">
+    <div className="h-full w-full overflow-y-auto overflow-x-hidden p-4">
+      <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col gap-3">
         <div className="min-h-11 shrink-0 space-y-1 pl-12 xl:pl-0">
           <h1 className="text-2xl font-semibold tracking-tight">Contribution Graph</h1>
           <p className="text-sm text-muted-foreground">A 12-month view of the days you reached your focus-minute goal.</p>
@@ -208,17 +208,17 @@ export default function Contributions() {
           </Card>
         </div>
 
-        <Card className="flex min-h-0 flex-1 flex-col rounded-lg shadow-sm">
+        <Card className="flex min-h-[24rem] flex-1 flex-col rounded-lg shadow-sm">
           <CardHeader className="shrink-0 p-4 pb-2">
             <CardTitle className="text-lg">Daily Goal History</CardTitle>
             <CardDescription>{goalsHit} goal days. Each day is judged against the goal saved for that date.</CardDescription>
           </CardHeader>
-          <CardContent className="flex min-h-0 flex-1 flex-col p-4 pt-2">
+          <CardContent className="flex min-h-0 flex-1 flex-col gap-3 p-4 pt-2">
             {loading ? (
               <div className="text-sm text-muted-foreground">Loading graph...</div>
             ) : (
               <>
-                <div className="min-h-0 flex-1">
+                <div className="min-h-0 shrink-0">
                   <div className="grid gap-x-2" style={{ gridTemplateColumns: "2rem minmax(0, 1fr)" }}>
                     <div />
                     <div className="relative mb-2 h-4">
@@ -256,7 +256,7 @@ export default function Contributions() {
                                 aria-label={day.inRange ? label : undefined}
                                 disabled={!day.inRange}
                                 onClick={() => setSelectedKey(day.key)}
-                                className={`aspect-square w-full rounded-[3px] border transition-transform ${getCellClass(day)} ${selectedKey === day.key ? "ring-2 ring-ring ring-offset-1 ring-offset-background" : ""} ${day.inRange ? "hover:scale-110" : "cursor-default"}`}
+                                className={`aspect-square w-full rounded-[3px] border transition-colors ${getCellClass(day)} ${selectedKey === day.key ? "ring-2 ring-ring ring-offset-1 ring-offset-background" : ""} ${day.inRange ? "hover:border-ring" : "cursor-default"}`}
                               />
                             );
                           })}
@@ -264,31 +264,33 @@ export default function Contributions() {
                       ))}
                     </div>
                   </div>
+
+                  <div className="mt-3 flex shrink-0 items-center justify-end gap-2 text-xs text-muted-foreground">
+                    <span>Less</span>
+                    <span className="h-3 w-3 rounded-[3px] border border-border bg-secondary" />
+                    <span className="h-3 w-3 rounded-[3px] border border-emerald-300 bg-emerald-200" />
+                    <span className="h-3 w-3 rounded-[3px] border border-emerald-600 bg-emerald-500" />
+                    <span>Goal hit</span>
+                  </div>
                 </div>
 
-                <div className="mt-3 flex shrink-0 items-center justify-end gap-2 text-xs text-muted-foreground">
-                  <span>Less</span>
-                  <span className="h-3 w-3 rounded-[3px] border border-border bg-secondary" />
-                  <span className="h-3 w-3 rounded-[3px] border border-emerald-300 bg-emerald-200" />
-                  <span className="h-3 w-3 rounded-[3px] border border-emerald-600 bg-emerald-500" />
-                  <span>Goal hit</span>
+                <div className="min-h-20 shrink-0 rounded-lg border bg-secondary/40 p-3">
+                  {selectedDay && selectedDay.inRange ? (
+                    <div className="space-y-1">
+                      <div className="text-sm font-medium">{formatLongDate(selectedDay.date)}</div>
+                      <div className="text-xs text-muted-foreground">{getStatus(selectedDay.record)}</div>
+                      <div className="pt-2 text-sm">
+                        {(selectedDay.record?.minutesCompleted ?? 0)} of {(selectedDay.record?.goalMinutes ?? 0)} focus minutes completed.
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-muted-foreground">Select a day to inspect its saved goal and focus minutes.</div>
+                  )}
                 </div>
               </>
             )}
           </CardContent>
         </Card>
-
-        {selectedDay && selectedDay.inRange && (
-          <Card className="shrink-0 rounded-lg shadow-sm">
-            <CardHeader className="p-3 pb-1">
-              <CardTitle className="text-base">{formatLongDate(selectedDay.date)}</CardTitle>
-              <CardDescription>{getStatus(selectedDay.record)}</CardDescription>
-            </CardHeader>
-            <CardContent className="p-3 pt-0 text-sm">
-              {(selectedDay.record?.minutesCompleted ?? 0)} of {(selectedDay.record?.goalMinutes ?? 0)} focus minutes completed.
-            </CardContent>
-          </Card>
-        )}
       </div>
     </div>
   );

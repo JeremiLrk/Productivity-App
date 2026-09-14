@@ -1,13 +1,15 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Capability for the main window",
-  "windows": ["main"],
+  "description": "Capability for app windows",
+  "windows": ["main", "timer-popout"],
   "permissions": [
     "core:default",
     "opener:default",
     "sql:allow-load",
     "sql:allow-execute",
-    "sql:allow-select"
+    "sql:allow-select",
+    "core:window:allow-start-dragging",
+    "core:webview:allow-create-webview-window"
   ]
 }

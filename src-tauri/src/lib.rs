@@ -1,12 +1,46 @@
 mod spotify;
 
-use tauri::Manager;
+use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
 
 #[tauri::command]
 fn focus_main(app: tauri::AppHandle) -> Result<(), String> {
     if let Some(win) = app.get_webview_window("main") {
         let _ = win.show();
+        let _ = win.unminimize();
         win.set_focus().map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+fn open_timer_popout(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(win) = app.get_webview_window("timer-popout") {
+        let _ = win.show();
+        let _ = win.unminimize();
+        win.set_focus().map_err(|e| e.to_string())?;
+        return Ok(());
+    }
+
+    WebviewWindowBuilder::new(
+        &app,
+        "timer-popout",
+        WebviewUrl::App("timer-popout.html".into()),
+    )
+    .title("LOCK IN Timer")
+    .inner_size(260.0, 150.0)
+    .min_inner_size(220.0, 130.0)
+    .resizable(true)
+    .always_on_top(true)
+    .build()
+    .map_err(|e| format!("Could not open timer pop-out: {e}"))?;
+
+    Ok(())
+}
+
+#[tauri::command]
+fn close_timer_popout(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(win) = app.get_webview_window("timer-popout") {
+        win.hide().map_err(|e| e.to_string())?;
     }
     Ok(())
 }
@@ -26,6 +60,8 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             focus_main,
+            open_timer_popout,
+            close_timer_popout,
             spotify::spotify_login,
             spotify::spotify_disconnect,
             spotify::spotify_current_playback,

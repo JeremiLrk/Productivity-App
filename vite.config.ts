@@ -32,4 +32,12 @@ export default defineConfig(async () => ({
       ignored: ["**/src-tauri/**"],
     },
   },
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, "index.html"),
+        timerPopout: path.resolve(__dirname, "timer-popout.html"),
+      },
+    },
+  },
 }));

@@ -1,14 +1,16 @@
 import { ProgressRing } from "@/components/ProgressRing";
 import { ProgressDots } from "@/components/ProgressDots";
 import { Button } from "@/components/ui/button";
+import { SettingsDialog } from "@/components/SettingsDialog";
 import type { PomodoroController } from "@/hooks/usePomodoro";
-import { Play, Pause, SkipForward, RotateCcw } from "lucide-react";
+import { ExternalLink, Play, Pause, SkipForward, RotateCcw } from "lucide-react";
 
 type PomodoroProps = {
   timer: PomodoroController;
+  onOpenPopout: () => void;
 };
 
-export default function Pomodoro({ timer }: PomodoroProps) {
+export default function Pomodoro({ timer, onOpenPopout }: PomodoroProps) {
   const {
     phase,
     secondsLeft,
@@ -19,6 +21,10 @@ export default function Pomodoro({ timer }: PomodoroProps) {
     reset,
     progress,
     settings,
+    setFocusMin,
+    setShortBreakMin,
+    setLongBreakMin,
+    setCyclesBeforeLongBreak,
     cyclesCompleted,
   } = timer;
 
@@ -89,7 +95,30 @@ export default function Pomodoro({ timer }: PomodoroProps) {
           <RotateCcw className="h-4 w-4" />
           Reset
         </Button>
+
       </div>
+
+      {running && (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Open timer pop-out"
+          title="Open timer pop-out"
+          className="fixed bottom-4 right-4 h-10 w-10 rounded-full border bg-background/80 shadow-sm backdrop-blur"
+          onClick={onOpenPopout}
+        >
+          <ExternalLink className="h-4 w-4" />
+        </Button>
+      )}
+
+      <SettingsDialog
+        settings={settings}
+        setFocusMin={setFocusMin}
+        setShortBreakMin={setShortBreakMin}
+        setLongBreakMin={setLongBreakMin}
+        setCyclesBeforeLongBreak={setCyclesBeforeLongBreak}
+        disabled={running}
+      />
     </div>
   );
 }
