@@ -91,20 +91,38 @@ export default function TimerPopout() {
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     let currentPreference: AppTheme = "system";
+    let cleanup: (() => void) | undefined;
 
     function applyPreference(nextPreference: AppTheme) {
       currentPreference = nextPreference;
-      setTheme(resolveTheme(nextPreference));
+      const resolved = resolveTheme(nextPreference);
+      setTheme(resolved);
+      document.body.style.background = resolved === "dark" ? "#101010" : "#ffffff";
+      document.body.style.color = resolved === "dark" ? "#fafafa" : "#111111";
     }
 
     const handleSystemChange = () => {
-      if (currentPreference === "system") setTheme(resolveTheme("system"));
+      if (currentPreference === "system") {
+        const resolved = resolveTheme("system");
+        setTheme(resolved);
+        document.body.style.background = resolved === "dark" ? "#101010" : "#ffffff";
+        document.body.style.color = resolved === "dark" ? "#fafafa" : "#111111";
+      }
     };
+
+    void listen<AppTheme>("theme-changed", (event) => {
+      applyPreference(event.payload);
+    }).then((unlisten) => {
+      cleanup = unlisten;
+    });
 
     void getThemePreference().then(applyPreference).catch(() => applyPreference("system"));
     mediaQuery.addEventListener("change", handleSystemChange);
 
-    return () => mediaQuery.removeEventListener("change", handleSystemChange);
+    return () => {
+      cleanup?.();
+      mediaQuery.removeEventListener("change", handleSystemChange);
+    };
   }, []);
 
   useEffect(() => {
